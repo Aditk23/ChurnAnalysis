@@ -1,0 +1,679 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "ChurnAnalysis.ipynb",
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "NG7fIOeTbnAs"
+      },
+      "source": [
+        "import tensorflow"
+      ],
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 35
+        },
+        "id": "SFlCN2YvY9Hk",
+        "outputId": "b0306499-fd2e-45e6-c462-6259780bd8be"
+      },
+      "source": [
+        "tensorflow.__version__"
+      ],
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "string"
+            },
+            "text/plain": [
+              "'2.5.0'"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 3
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "A-fy0z6KZFMq"
+      },
+      "source": [
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.metrics import confusion_matrix\n",
+        "import tensorflow\n",
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Dense\n"
+      ],
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 224
+        },
+        "id": "b9qTdDycaDzt",
+        "outputId": "79a15f77-7bdd-439a-fc93-266e35090b78"
+      },
+      "source": [
+        "data = pd.read_csv('Churn_Modelling.csv')\n",
+        "data.head()"
+      ],
+      "execution_count": 5,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>RowNumber</th>\n",
+              "      <th>CustomerId</th>\n",
+              "      <th>Surname</th>\n",
+              "      <th>CreditScore</th>\n",
+              "      <th>Geography</th>\n",
+              "      <th>Gender</th>\n",
+              "      <th>Age</th>\n",
+              "      <th>Tenure</th>\n",
+              "      <th>Balance</th>\n",
+              "      <th>NumOfProducts</th>\n",
+              "      <th>HasCrCard</th>\n",
+              "      <th>IsActiveMember</th>\n",
+              "      <th>EstimatedSalary</th>\n",
+              "      <th>Exited</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>1</td>\n",
+              "      <td>15634602</td>\n",
+              "      <td>Hargrave</td>\n",
+              "      <td>619</td>\n",
+              "      <td>France</td>\n",
+              "      <td>Female</td>\n",
+              "      <td>42</td>\n",
+              "      <td>2</td>\n",
+              "      <td>0.00</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>101348.88</td>\n",
+              "      <td>1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>2</td>\n",
+              "      <td>15647311</td>\n",
+              "      <td>Hill</td>\n",
+              "      <td>608</td>\n",
+              "      <td>Spain</td>\n",
+              "      <td>Female</td>\n",
+              "      <td>41</td>\n",
+              "      <td>1</td>\n",
+              "      <td>83807.86</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>112542.58</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>3</td>\n",
+              "      <td>15619304</td>\n",
+              "      <td>Onio</td>\n",
+              "      <td>502</td>\n",
+              "      <td>France</td>\n",
+              "      <td>Female</td>\n",
+              "      <td>42</td>\n",
+              "      <td>8</td>\n",
+              "      <td>159660.80</td>\n",
+              "      <td>3</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>113931.57</td>\n",
+              "      <td>1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>4</td>\n",
+              "      <td>15701354</td>\n",
+              "      <td>Boni</td>\n",
+              "      <td>699</td>\n",
+              "      <td>France</td>\n",
+              "      <td>Female</td>\n",
+              "      <td>39</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0.00</td>\n",
+              "      <td>2</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>93826.63</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>5</td>\n",
+              "      <td>15737888</td>\n",
+              "      <td>Mitchell</td>\n",
+              "      <td>850</td>\n",
+              "      <td>Spain</td>\n",
+              "      <td>Female</td>\n",
+              "      <td>43</td>\n",
+              "      <td>2</td>\n",
+              "      <td>125510.82</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>79084.10</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "   RowNumber  CustomerId   Surname  ...  IsActiveMember EstimatedSalary Exited\n",
+              "0          1    15634602  Hargrave  ...               1       101348.88      1\n",
+              "1          2    15647311      Hill  ...               1       112542.58      0\n",
+              "2          3    15619304      Onio  ...               0       113931.57      1\n",
+              "3          4    15701354      Boni  ...               0        93826.63      0\n",
+              "4          5    15737888  Mitchell  ...               1        79084.10      0\n",
+              "\n",
+              "[5 rows x 14 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 5
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "xh3ZkKyhbJLN",
+        "outputId": "d788fe02-15b0-49cb-c835-64522fd2f584"
+      },
+      "source": [
+        "data.isnull().sum()"
+      ],
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "RowNumber          0\n",
+              "CustomerId         0\n",
+              "Surname            0\n",
+              "CreditScore        0\n",
+              "Geography          0\n",
+              "Gender             0\n",
+              "Age                0\n",
+              "Tenure             0\n",
+              "Balance            0\n",
+              "NumOfProducts      0\n",
+              "HasCrCard          0\n",
+              "IsActiveMember     0\n",
+              "EstimatedSalary    0\n",
+              "Exited             0\n",
+              "dtype: int64"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 6
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vyN1NEltbUDb",
+        "outputId": "22363c35-fc3a-43f7-8d17-ad4798834ddb"
+      },
+      "source": [
+        "data.info()"
+      ],
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "<class 'pandas.core.frame.DataFrame'>\n",
+            "RangeIndex: 10000 entries, 0 to 9999\n",
+            "Data columns (total 14 columns):\n",
+            " #   Column           Non-Null Count  Dtype  \n",
+            "---  ------           --------------  -----  \n",
+            " 0   RowNumber        10000 non-null  int64  \n",
+            " 1   CustomerId       10000 non-null  int64  \n",
+            " 2   Surname          10000 non-null  object \n",
+            " 3   CreditScore      10000 non-null  int64  \n",
+            " 4   Geography        10000 non-null  object \n",
+            " 5   Gender           10000 non-null  object \n",
+            " 6   Age              10000 non-null  int64  \n",
+            " 7   Tenure           10000 non-null  int64  \n",
+            " 8   Balance          10000 non-null  float64\n",
+            " 9   NumOfProducts    10000 non-null  int64  \n",
+            " 10  HasCrCard        10000 non-null  int64  \n",
+            " 11  IsActiveMember   10000 non-null  int64  \n",
+            " 12  EstimatedSalary  10000 non-null  float64\n",
+            " 13  Exited           10000 non-null  int64  \n",
+            "dtypes: float64(2), int64(9), object(3)\n",
+            "memory usage: 1.1+ MB\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "pWHTlo71cUiT"
+      },
+      "source": [
+        "X = data.iloc[:,3:13]\n",
+        "y = data.iloc[:,13]"
+      ],
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 224
+        },
+        "id": "2wKsVeQucjIy",
+        "outputId": "cb135424-c7a3-45fb-f213-0532a7453a14"
+      },
+      "source": [
+        "X = pd.get_dummies(X,prefix=['Geography','Gender'],drop_first=True)\n",
+        "X.head()"
+      ],
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>CreditScore</th>\n",
+              "      <th>Age</th>\n",
+              "      <th>Tenure</th>\n",
+              "      <th>Balance</th>\n",
+              "      <th>NumOfProducts</th>\n",
+              "      <th>HasCrCard</th>\n",
+              "      <th>IsActiveMember</th>\n",
+              "      <th>EstimatedSalary</th>\n",
+              "      <th>Geography_Germany</th>\n",
+              "      <th>Geography_Spain</th>\n",
+              "      <th>Gender_Male</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>619</td>\n",
+              "      <td>42</td>\n",
+              "      <td>2</td>\n",
+              "      <td>0.00</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>101348.88</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>608</td>\n",
+              "      <td>41</td>\n",
+              "      <td>1</td>\n",
+              "      <td>83807.86</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>112542.58</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>502</td>\n",
+              "      <td>42</td>\n",
+              "      <td>8</td>\n",
+              "      <td>159660.80</td>\n",
+              "      <td>3</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>113931.57</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>699</td>\n",
+              "      <td>39</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0.00</td>\n",
+              "      <td>2</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>93826.63</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>850</td>\n",
+              "      <td>43</td>\n",
+              "      <td>2</td>\n",
+              "      <td>125510.82</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1</td>\n",
+              "      <td>79084.10</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "   CreditScore  Age  Tenure  ...  Geography_Germany  Geography_Spain  Gender_Male\n",
+              "0          619   42       2  ...                  0                0            0\n",
+              "1          608   41       1  ...                  0                1            0\n",
+              "2          502   42       8  ...                  0                0            0\n",
+              "3          699   39       1  ...                  0                0            0\n",
+              "4          850   43       2  ...                  0                1            0\n",
+              "\n",
+              "[5 rows x 11 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 9
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "PZ2BW_-Lc8cD"
+      },
+      "source": [
+        "X_train , X_test , y_train , y_test = train_test_split(X,y,test_size=0.2,random_state=365)"
+      ],
+      "execution_count": 10,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "RYYNwpk_eVvT"
+      },
+      "source": [
+        "from sklearn.preprocessing import StandardScaler\n",
+        "\n",
+        "sc = StandardScaler()\n",
+        "X_train = sc.fit_transform(X_train)\n",
+        "X_test = sc.transform(X_test)"
+      ],
+      "execution_count": 11,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "wLjWSDVue4Nf"
+      },
+      "source": [
+        "model = Sequential()\n",
+        "# Hidden Layer\n",
+        "model.add(Dense(200,activation='relu'))\n",
+        "model.add(Dense(150,activation='sigmoid'))\n",
+        "model.add(Dense(190,activation='relu'))\n",
+        "model.add(Dense(70,activation='relu'))\n",
+        "# Output layer\n",
+        "model.add(Dense(1,activation='sigmoid'))"
+      ],
+      "execution_count": 22,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "deODpND6gfQT"
+      },
+      "source": [
+        "model.compile(optimizer='sgd',loss='binary_crossentropy',metrics=['accuracy'])"
+      ],
+      "execution_count": 23,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Hdo0a4k6gzWP",
+        "outputId": "52433684-323c-4fc7-ef39-193a74f88aeb"
+      },
+      "source": [
+        "model.fit(X_train,y_train,epochs=50 , batch_size=30 , validation_split=0.20)"
+      ],
+      "execution_count": 25,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Epoch 1/50\n",
+            "214/214 [==============================] - 1s 3ms/step - loss: 0.3315 - accuracy: 0.8633 - val_loss: 0.3661 - val_accuracy: 0.8506\n",
+            "Epoch 2/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3325 - accuracy: 0.8622 - val_loss: 0.3654 - val_accuracy: 0.8481\n",
+            "Epoch 3/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3309 - accuracy: 0.8642 - val_loss: 0.3859 - val_accuracy: 0.8313\n",
+            "Epoch 4/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3308 - accuracy: 0.8636 - val_loss: 0.3640 - val_accuracy: 0.8462\n",
+            "Epoch 5/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3310 - accuracy: 0.8611 - val_loss: 0.3908 - val_accuracy: 0.8469\n",
+            "Epoch 6/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3298 - accuracy: 0.8666 - val_loss: 0.3828 - val_accuracy: 0.8519\n",
+            "Epoch 7/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3277 - accuracy: 0.8647 - val_loss: 0.3905 - val_accuracy: 0.8306\n",
+            "Epoch 8/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3297 - accuracy: 0.8636 - val_loss: 0.3657 - val_accuracy: 0.8444\n",
+            "Epoch 9/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3280 - accuracy: 0.8648 - val_loss: 0.3661 - val_accuracy: 0.8431\n",
+            "Epoch 10/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3273 - accuracy: 0.8659 - val_loss: 0.3911 - val_accuracy: 0.8500\n",
+            "Epoch 11/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3276 - accuracy: 0.8653 - val_loss: 0.3682 - val_accuracy: 0.8431\n",
+            "Epoch 12/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3265 - accuracy: 0.8667 - val_loss: 0.3664 - val_accuracy: 0.8438\n",
+            "Epoch 13/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3261 - accuracy: 0.8652 - val_loss: 0.3719 - val_accuracy: 0.8381\n",
+            "Epoch 14/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3268 - accuracy: 0.8683 - val_loss: 0.3665 - val_accuracy: 0.8444\n",
+            "Epoch 15/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3252 - accuracy: 0.8645 - val_loss: 0.3710 - val_accuracy: 0.8512\n",
+            "Epoch 16/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3244 - accuracy: 0.8658 - val_loss: 0.3682 - val_accuracy: 0.8406\n",
+            "Epoch 17/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3254 - accuracy: 0.8677 - val_loss: 0.3681 - val_accuracy: 0.8469\n",
+            "Epoch 18/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3270 - accuracy: 0.8650 - val_loss: 0.3705 - val_accuracy: 0.8494\n",
+            "Epoch 19/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3245 - accuracy: 0.8661 - val_loss: 0.3704 - val_accuracy: 0.8444\n",
+            "Epoch 20/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3243 - accuracy: 0.8655 - val_loss: 0.3782 - val_accuracy: 0.8506\n",
+            "Epoch 21/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3241 - accuracy: 0.8689 - val_loss: 0.3750 - val_accuracy: 0.8350\n",
+            "Epoch 22/50\n",
+            "214/214 [==============================] - 1s 3ms/step - loss: 0.3247 - accuracy: 0.8662 - val_loss: 0.3675 - val_accuracy: 0.8450\n",
+            "Epoch 23/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3220 - accuracy: 0.8692 - val_loss: 0.3735 - val_accuracy: 0.8494\n",
+            "Epoch 24/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3230 - accuracy: 0.8669 - val_loss: 0.3870 - val_accuracy: 0.8494\n",
+            "Epoch 25/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3235 - accuracy: 0.8661 - val_loss: 0.3927 - val_accuracy: 0.8250\n",
+            "Epoch 26/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3224 - accuracy: 0.8669 - val_loss: 0.4146 - val_accuracy: 0.8106\n",
+            "Epoch 27/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3221 - accuracy: 0.8681 - val_loss: 0.3801 - val_accuracy: 0.8363\n",
+            "Epoch 28/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3226 - accuracy: 0.8661 - val_loss: 0.3717 - val_accuracy: 0.8400\n",
+            "Epoch 29/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3204 - accuracy: 0.8684 - val_loss: 0.3938 - val_accuracy: 0.8462\n",
+            "Epoch 30/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3210 - accuracy: 0.8667 - val_loss: 0.3774 - val_accuracy: 0.8506\n",
+            "Epoch 31/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3216 - accuracy: 0.8659 - val_loss: 0.3685 - val_accuracy: 0.8487\n",
+            "Epoch 32/50\n",
+            "214/214 [==============================] - 1s 3ms/step - loss: 0.3201 - accuracy: 0.8684 - val_loss: 0.3710 - val_accuracy: 0.8462\n",
+            "Epoch 33/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3206 - accuracy: 0.8680 - val_loss: 0.3701 - val_accuracy: 0.8487\n",
+            "Epoch 34/50\n",
+            "214/214 [==============================] - 1s 3ms/step - loss: 0.3180 - accuracy: 0.8709 - val_loss: 0.3666 - val_accuracy: 0.8494\n",
+            "Epoch 35/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3192 - accuracy: 0.8706 - val_loss: 0.3697 - val_accuracy: 0.8456\n",
+            "Epoch 36/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3204 - accuracy: 0.8684 - val_loss: 0.3899 - val_accuracy: 0.8475\n",
+            "Epoch 37/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3202 - accuracy: 0.8680 - val_loss: 0.3881 - val_accuracy: 0.8531\n",
+            "Epoch 38/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3188 - accuracy: 0.8708 - val_loss: 0.3743 - val_accuracy: 0.8494\n",
+            "Epoch 39/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3181 - accuracy: 0.8691 - val_loss: 0.3679 - val_accuracy: 0.8450\n",
+            "Epoch 40/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3183 - accuracy: 0.8700 - val_loss: 0.3733 - val_accuracy: 0.8419\n",
+            "Epoch 41/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3190 - accuracy: 0.8703 - val_loss: 0.3793 - val_accuracy: 0.8381\n",
+            "Epoch 42/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3180 - accuracy: 0.8712 - val_loss: 0.3724 - val_accuracy: 0.8487\n",
+            "Epoch 43/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3186 - accuracy: 0.8687 - val_loss: 0.3789 - val_accuracy: 0.8500\n",
+            "Epoch 44/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3168 - accuracy: 0.8711 - val_loss: 0.3735 - val_accuracy: 0.8456\n",
+            "Epoch 45/50\n",
+            "214/214 [==============================] - 1s 2ms/step - loss: 0.3157 - accuracy: 0.8717 - val_loss: 0.3724 - val_accuracy: 0.8413\n",
+            "Epoch 46/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3162 - accuracy: 0.8705 - val_loss: 0.3694 - val_accuracy: 0.8494\n",
+            "Epoch 47/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3176 - accuracy: 0.8720 - val_loss: 0.3710 - val_accuracy: 0.8406\n",
+            "Epoch 48/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3148 - accuracy: 0.8719 - val_loss: 0.3718 - val_accuracy: 0.8462\n",
+            "Epoch 49/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3154 - accuracy: 0.8722 - val_loss: 0.3944 - val_accuracy: 0.8519\n",
+            "Epoch 50/50\n",
+            "214/214 [==============================] - 0s 2ms/step - loss: 0.3155 - accuracy: 0.8706 - val_loss: 0.3724 - val_accuracy: 0.8456\n"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<tensorflow.python.keras.callbacks.History at 0x7f5dec596990>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 25
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "pJtbvyQwb8xT"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": 14,
+      "outputs": []
+    }
+  ]
+}
